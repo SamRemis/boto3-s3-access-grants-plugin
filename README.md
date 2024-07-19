@@ -12,6 +12,8 @@ Run this command to install the plugin.
 pip install aws-s3-access-grants-boto3-plugin==<Latest_Version>
 ```
 The plugin uses cacheout library for caching. So you need to install that as well.
+Cacheout is not widely used; how was this library the one that was decided on?
+
 ```
 pip install cacheout
 ```

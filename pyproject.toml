@@ -16,3 +16,5 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/aws/boto3-s3-access-grants-plugin"
 Issues = "https://github.com/aws/boto3-s3-access-grants-plugin/issues"
+
+#We should define dependencies here- one on the minimum usable version of botocore, and another on cachout (or a more trusted library)

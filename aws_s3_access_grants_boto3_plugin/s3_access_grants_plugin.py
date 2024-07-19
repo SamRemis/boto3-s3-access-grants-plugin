@@ -11,6 +11,7 @@ from aws_s3_access_grants_boto3_plugin.cache.bucket_region_resolver_cache import
 
 class S3AccessGrantsPlugin:
     session = botocore.session.get_session()
+    #Is this variable used somewhere I don't see?
     request = None
     sts_client = session.create_client('sts')
     access_denied_cache = AccessDeniedCache()
@@ -58,6 +59,7 @@ class S3AccessGrantsPlugin:
 
     @staticmethod
     def __get_s3_prefix(operation_name, request):
+        #I don't think you need to set this here, do you?  It's set below
         s3_prefix = None
         if operation_name == 'DeleteObjects':
             bucket_name = request.context['input_params']['Bucket']
@@ -77,6 +79,7 @@ class S3AccessGrantsPlugin:
             s3_prefix = destination_bucket_name + S3AccessGrantsPlugin.__get_common_prefix_for_multiple_prefixes(prefix_list)
         else:
             s3_prefix = request.context['input_params']['Bucket']
+            #Why is this a try except instead of using .get()?  IE request.context.get('input_params', []).get('Key', s3_prefix) (or something neater)
             try:
                 s3_prefix = s3_prefix + "/" + request.context['input_params']['Key']
             except KeyError:

@@ -1,6 +1,8 @@
 from types import MappingProxyType
 from aws_s3_access_grants_boto3_plugin.exceptions import UnsupportedOperationError
 
+#Not a problem, but kinda curious why this is the syntax.  The keys here should probably either match the models
+# or match the botocore names (head_object, etc.)
 _s3_operation_to_permission_map = MappingProxyType(
     {
         "HEADOBJECT": "READ",

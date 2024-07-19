@@ -16,6 +16,7 @@ class AccountIdResolverCache:
         self.cache_ttl = cache_ttl
 
         if self.cache_size > MAX_LIMIT_ACCOUNT_ID_CACHE_SIZE:
+            #Repeating myself here, but "should" is not something that we should use in exceptions.  "Must" would be better
             raise IllegalArgumentException(
                 "Max cache size should be less than or equal to " + str(MAX_LIMIT_ACCOUNT_ID_CACHE_SIZE))
 
@@ -24,7 +25,7 @@ class AccountIdResolverCache:
                 MAX_LIMIT_TTL))
 
         self.account_id_resolver_cache = Cache(maxsize=self.cache_size, ttl=cache_ttl)
-
+#Again, why are these methods static?
     @staticmethod
     def __get_bucket_name(s3_prefix):
         split_prefix = s3_prefix.split("/")

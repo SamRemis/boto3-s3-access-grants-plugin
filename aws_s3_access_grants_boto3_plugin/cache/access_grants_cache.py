@@ -12,6 +12,7 @@ MAX_GET_DATA_ACCESS_DURATION = 12 * 60 * 60  # 12 hours
 CACHE_EXPIRATION_TIME_PERCENTAGE = 90
 
 
+#Shouldn't all of these cache classes inherit from a parent class or an interface and share logic?
 class AccessGrantsCache:
     access_grants_cache = None
     account_id_resolver_cache = AccountIdResolverCache()
@@ -33,13 +34,18 @@ class AccessGrantsCache:
         self.access_grants_cache = Cache(maxsize=self.cache_size, ttl=self.cache_ttl)
 
     #  This is for grants of type "s3://bucket/prefix/*"
+    # Double underscores and single underscores are used for different things.  Single underscores should be used here (and pretty much everywhere else)
     def __search_credentials_at_prefix_level(self, cache_key):
-
+        #This function looks quite a bit like the next one; could we refactor this somehow?  Either make it one function
+        # that we call with a parameter, or refactor out a separate function?  This violates the DRY principle
         prefix = cache_key.s3_prefix
+        #Do we know for sure that objects will ALWAYS be in this format?  Could this potentially lead to an infinite loop?
+        #Maybe I'm missing something, but why is this different from the method below?  Won't the last few checks just be checking for `/`?
         while prefix != "s3:":
             cache_key = CacheKey(cache_key=cache_key, s3_prefix=prefix)
             cache_value = self.access_grants_cache.get(cache_key)
             if cache_value is not None:
+                #Won't this get called every time an object is accessed, leading to really noisy logs?
                 logging.debug("Successfully retrieved credentials from cache.")
                 return cache_value
             prefix = prefix.rsplit('/', 1)[0]
@@ -54,12 +60,15 @@ class AccessGrantsCache:
             if cache_value is not None:
                 logging.debug("Successfully retrieved credentials from cache.")
                 return cache_value
+            #Nice pythonic way to do this :)
             prefix = prefix[:-1]
         return None
 
     def __get_credentials_from_service(self, s3_control_client, cache_key, account_id):
         if s3_control_client is None:
+            #Should is not appropriate here.  This error message needs to be updated.
             raise IllegalArgumentException("S3 Control Client should not be null")
+        #What coding style are you following?  Are you using a tool like ruff or black to enforce it?
         bucket_owner_account_id = self.account_id_resolver_cache.resolve(s3_control_client, account_id,
                                                                          cache_key.s3_prefix)
         logging.debug((
@@ -70,6 +79,7 @@ class AccessGrantsCache:
 
     # This method removes '/*' from matchedGrantTarget if present.
     # This helps us differentiate between grants of type "s3://bucket/prefix/*" and "s3://bucket/prefix*".
+    #Why is this static?  It's only called from the same class
     @staticmethod
     def __process_matched_target(matched_grant_target):
         if matched_grant_target.endswith("/*"):
@@ -79,6 +89,7 @@ class AccessGrantsCache:
     def get_credentials(self, s3_control_client, cache_key, account_id, access_denied_cache):
         logging.debug("Fetching credentials from Access Grants for s3Prefix: " + cache_key.s3_prefix)
         credentials = self.__search_credentials_at_prefix_level(cache_key)
+        #This logic is kind of messy- can we restructure it somehow?  Repeating this check for if credentials is still None is a code smell IMO
         if credentials is None and (cache_key.permission == "READ" or cache_key.permission == "WRITE"):
             credentials = self.__search_credentials_at_prefix_level(
                 CacheKey(permission="READWRITE", cache_key=cache_key))
